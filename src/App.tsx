@@ -1,12 +1,12 @@
-// import apiClient from "./services/api-client";
-import axios from "axios";
+// import axios from "axios";
 import { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 import { useNavigate } from "react-router-dom";
-
+import styles from "../src/App.module.css";
 import LandlordDetailPage from "./components/LandlordDetailPage";
 import { Landlord } from "./components/LandlordDetailPage";
-// import apiClient from "./services/api-client";
+import apiClient from "./services/api-client";
+import { border } from "@chakra-ui/react";
 
 const App = () => {
   const navigate = useNavigate();
@@ -56,27 +56,26 @@ const App = () => {
 
   const fetchData = (url: string) => {
     setLoading(true);
-    axios
+    apiClient
       .get(url)
       .then((response) => {
         setData(response.data.results);
         setNextPageUrl(response.data.next);
         setPrevPageUrl(response.data.previous);
+        setLoading(false);
       })
       .catch((err) => {
         setError(err.message);
-      })
-      .finally(() => {
         setLoading(false);
       });
   };
 
   useEffect(() => {
-    fetchData("https://api.gurukoder.com/landlord/landlords-properties/");
+    fetchData("/landlords-properties/");
   }, []);
   const handleViewDetails = (landlord: Landlord) => {
     navigate(`/landlord/${landlord.landlord_id}`, { replace: true });
-    console.log(data)
+    console.log(data);
   };
   const handleNextPage = () => {
     if (nextPageUrl) {
@@ -92,8 +91,18 @@ const App = () => {
 
   return (
     <>
+      {/* { loading && 
+        <div className="text-center m-3">
+        <div className="spinner-border text-primary" role="status">
+        </div>
+      </div>} */}
       {error && <p className="text text-danger">{error}</p>}
-      <div className="settingTable">
+      <div className={styles.settingTable}>
+        {loading && (
+          <div className="text-center m-3">
+            <div className="spinner-border text-primary" role="status"></div>
+          </div>
+        )}
         <DataTable
           className="dataTable"
           columns={columns}
@@ -105,8 +114,16 @@ const App = () => {
       {selectedLandlordId && (
         <LandlordDetailPage selectedLandlordId={selectedLandlordId} />
       )}
-      <button onClick={handlePreviousPage}>Prev</button>
-      <button onClick={handleNextPage}>Next</button>
+      {!loading && (
+        <div className="d-flex justify-content-center m-2">
+          <button className="btn btn-primary m-1" onClick={handlePreviousPage}>
+            Prev
+          </button>
+          <button className="btn btn-primary m-1" onClick={handleNextPage}>
+            Next
+          </button>
+        </div>
+      )}
     </>
   );
 };

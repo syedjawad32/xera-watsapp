@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-// import apiClient from "../services/api-client";
-import { Card } from "react-bootstrap";
+import apiClient from "../services/api-client";
+import { Image } from "@chakra-ui/react";
+import styles from "./Landlord.module.css";
+import user from "../assets/user.jpg";
+import whatsapp from "../assets/whatsapp.jpg";
 
 interface Property {
   property_id: number;
@@ -31,108 +33,151 @@ export interface Landlord {
   phone_1: string;
   messages_count: number;
   properties: Property[];
+  count: number;
 }
 
 interface Props {
   selectedLandlordId: number;
 }
 
+const formatTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
+};
 
 const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
-  console.log("LandlordDetailPage rendered");
   const [landlord, setLandlord] = useState<Landlord | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchLandlordDetails = () => {
-      axios
-        .get<{ results: Landlord[] }>(
-          "https://api.gurukoder.com/landlord/landlords-properties"
-        )
-        .then((landlordsResponse) => {
-          // Find the landlord based on landlord_id
-          const selectedLandlord = landlordsResponse.data.results.find(
-            (landlord) => landlord.landlord_id === selectedLandlordId
-          );
-          // Update landlord state
-          if (selectedLandlord) {
-            setLandlord(selectedLandlord);
-            return selectedLandlord;
-          } else {
-            console.error("Landlord not found");
-            throw new Error("Landlord not found");
+    let foundDesiredLandlord = false;
+    let pageUrl = "/landlords-properties?page=" + currentPage;
+    setLoading(true);
+    function fetchLandlordDetails(pageUrl: string) {
+      apiClient
+        .get(pageUrl)
+        .then((response) => {
+          console.log("Landlords response:", response.data);
+          const { results, next } = response.data;
+          for (const landlord of results) {
+            if (landlord.landlord_id === selectedLandlordId) {
+              setLandlord(landlord);
+              foundDesiredLandlord = true;
+              break;
+            }
           }
-        })
-        .then(() => {
-          // Fetch messages for the selected landlord
-          return axios.get<{ results: Message[] }>(
-            `https://api.gurukoder.com/landlord/messages/?landlord_id=${selectedLandlordId}`
-          );
-        })
-        .then((messagesResponse) => {
-          // Update messages state
-          setMessages(messagesResponse.data.results);
+          if (next && !foundDesiredLandlord) {
+            pageUrl = next;
+            fetchLandlordDetails(pageUrl);
+          }
         })
         .catch((error) => {
           console.error("Error fetching landlord details:", error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+    fetchLandlordDetails(pageUrl);
+  }, [selectedLandlordId, currentPage, apiClient]);
+  // Fetch messages based on selected landlord ID
+  useEffect(() => {
+    const fetchMessages = async () => {
+      apiClient
+        .get(`/messages/?landlord_id=${selectedLandlordId}`)
+        .then((response) => {
+          console.log("Messages response:", response.data);
+          setMessages(response.data.results);
+        })
+        .catch((error) => {
+          console.error("Error fetching messages:", error);
         });
     };
 
-    fetchLandlordDetails();
+    fetchMessages();
   }, [selectedLandlordId]);
 
-  // Render landlord details
   return (
-      <div>
-      {landlord && (
-        <Card>
-          <Card.Body>
-            <Card.Title>{landlord.full_name}</Card.Title>
-            <Card.Title>Property Details</Card.Title>
-            <Card.Subtitle className="mb-2 text-muted">
-              Properties: {landlord.properties.length}
-            </Card.Subtitle>
-            {landlord.properties.map((property) => (
-              <Card.Text key={property.property_id}>
-                <strong>Property ID:</strong> {property.property_id}
-                <br />
-                <strong>Property Number:</strong> {property.p_number}
-                <br />
-                <strong>Unit Number:</strong> {property.unit_no}
-                <br />
-                <strong>Property Type:</strong> {property.property_type}
-                <br />
-                <strong>Rooms:</strong> {property.no_room}
-                <br />
-                <strong>Building name:</strong> {property.building_name}
-                <br />
-                <strong>Project:</strong> {property.project}
-                <br />
-                <strong>Master Project:</strong> {property.master_project}
-                <br />
-              </Card.Text>
-            ))}
-          </Card.Body>
-          <hr />
-          <Card.Body>
-            <Card.Title className="messageColor">Messages</Card.Title>
-            {messages.length > 0 ? (
-              messages.map((message) => (
-                <Card.Text key={message.message_id}>
-                  <strong>TimeStamp:</strong> {message.timestamp}
-                  <br />
-                  <strong>Message:</strong> {message.message}
-                  <br />
-                </Card.Text>
-              ))
-            ) : (
-              <p>No messages found.</p>
-            )}
-          </Card.Body>
-        </Card>
+    <>
+      {isLoading && (
+        <div className="text-center m-3">
+          <div className="spinner-border text-primary" role="status"></div>
+        </div>
       )}
-
-    </div>
+      <div className={styles.mainContainer}>
+        {landlord && (
+          <div className={styles.mainContent}>
+            <span className={styles.userName}>
+              {" "}
+              <Image
+                src={user}
+                boxSize="70px"
+                borderRadius={50}
+                overflow={"hidden"}
+              ></Image>{" "}
+              <h1>{landlord.full_name}</h1>
+            </span>
+            <div
+              style={{ backgroundImage: `url(${whatsapp})` }}
+              className={styles.messageContainer}
+            >
+              {/* <h4>Message</h4> */}
+              <div>
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <span key={message.message_id}>
+                      <br />
+                      <br />
+                      <strong>Message:</strong>{" "}
+                      {message.message.split("\n").map((line, index) => (
+                        <React.Fragment key={index}>
+                          {line}
+                          <br />
+                        </React.Fragment>
+                      ))}
+                      <strong>TimeStamp:</strong>{" "}
+                      {formatTimestamp(message.timestamp)}
+                    </span>
+                  ))
+                ) : (
+                  <p>No messages found.</p>
+                )}
+              </div>
+            </div>
+            <div
+              style={{ backgroundImage: `url(${whatsapp})` }}
+              className={styles.propertyCard}
+            >
+              <h6 className={styles.proDetailsBackground}>Property Details</h6>
+              <p>Properties:{landlord.properties.length}</p>
+              {landlord.properties.map((property) => (
+                <span key={property.property_id}>
+                  <strong>Property ID:</strong> {property.property_id}
+                  <br />
+                  <strong>Property Number:</strong> {property.p_number}
+                  <br />
+                  <strong>Unit Number:</strong> {property.unit_no}
+                  <br />
+                  <strong>Property Type:</strong> {property.property_type}
+                  <br />
+                  <strong>Rooms:</strong> {property.no_room}
+                  <br />
+                  <strong>Building name:</strong> {property.building_name}
+                  <br />
+                  <strong>Project:</strong> {property.project}
+                  <br />
+                  <strong>Master Project:</strong> {property.master_project}
+                  <br />
+                  <hr />
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
