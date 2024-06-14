@@ -9,8 +9,8 @@ import { ChakraProvider } from '@chakra-ui/react'
 import './index.css';
 
 const RouteRenderer = () => {
-  const { id } = useParams<{ id: string | undefined }>(); // Specify the type for useParams
-  const selectedLandlordId = parseInt(id || "0"); // Use optional chaining or fallback value
+  const { id } = useParams<{ id: string | undefined }>(); 
+  const selectedLandlordId = parseInt(id || "0"); 
 
   return <LandlordDetailPage selectedLandlordId={selectedLandlordId} />;
 };

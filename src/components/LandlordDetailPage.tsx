@@ -9,12 +9,10 @@ interface Property {
   property_id: number;
   p_number: number;
   no_room: number;
-  actual_area: number | null;
   property_type: string;
   unit_no: string;
   area: string;
   building_name: string;
-  master_project: string;
   project: string;
   state: string;
 }
@@ -117,7 +115,7 @@ const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
                 borderRadius={50}
                 overflow={"hidden"}
               ></Image>{" "}
-              <h1>{landlord.full_name}</h1>
+              <h2 className={styles.userHeading}>{landlord.full_name}</h2>
             </span>
             <div
               style={{ backgroundImage: `url(${whatsapp})` }}
@@ -137,8 +135,11 @@ const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
                           <br />
                         </React.Fragment>
                       ))}
-                      <strong>TimeStamp:</strong>{" "}
+                      <span className={styles.timeFloat}>
+                      <strong>Time:</strong>{" "}
                       {formatTimestamp(message.timestamp)}
+                      </span>
+                     
                     </span>
                   ))
                 ) : (
@@ -167,8 +168,6 @@ const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
                   <strong>Building name:</strong> {property.building_name}
                   <br />
                   <strong>Project:</strong> {property.project}
-                  <br />
-                  <strong>Master Project:</strong> {property.master_project}
                   <br />
                   <hr />
                 </span>

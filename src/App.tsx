@@ -6,7 +6,6 @@ import styles from "../src/App.module.css";
 import LandlordDetailPage from "./components/LandlordDetailPage";
 import { Landlord } from "./components/LandlordDetailPage";
 import apiClient from "./services/api-client";
-import { border } from "@chakra-ui/react";
 
 const App = () => {
   const navigate = useNavigate();
@@ -91,11 +90,6 @@ const App = () => {
 
   return (
     <>
-      {/* { loading && 
-        <div className="text-center m-3">
-        <div className="spinner-border text-primary" role="status">
-        </div>
-      </div>} */}
       {error && <p className="text text-danger">{error}</p>}
       <div className={styles.settingTable}>
         {loading && (

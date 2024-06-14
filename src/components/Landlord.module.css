@@ -4,12 +4,14 @@
   align-items: center;
 }
 .userName {
-  /* color: aqua; */
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 3%;
   margin-top: 2%;
+}
+.userHeading{
+  font-size: 1.5rem;
 }
 .messageContainer {
   width: 50vw;
@@ -35,3 +37,20 @@
   /* background-repeat: no-repeat;
     background-size: cover; */
 }
+.timeFloat{
+  margin: 4% 0% 0% 0%;
+}
+
+
+
+/* mediaquery */
+
+@media only screen and (max-width: 920px) {
+  .messageContainer {
+    width: 90vw;
+  }
+  .propertyCard {
+    width: 90vw;
+  }
+}
+
