@@ -1,9 +1,25 @@
 import React, { useState, useEffect } from "react";
+import {
+  Image,
+  Card,
+  CardHeader,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Box,
+  Heading,
+  Flex,
+  Text,
+} from "@chakra-ui/react";
+import { RingLoader } from "react-spinners";
 import apiClient from "../services/api-client";
-import { Image } from "@chakra-ui/react";
 import styles from "./Landlord.module.css";
-import user from "../assets/user.jpg";
-import whatsapp from "../assets/whatsapp.jpg";
+import Footer from "./Footer";
+import user from "../assets/user-profile.jpg";
+import whatsapp from "../assets/whatsapp.jpeg";
 
 interface Property {
   property_id: number;
@@ -31,11 +47,11 @@ export interface Landlord {
   phone_1: string;
   messages_count: number;
   properties: Property[];
-  count: number;
 }
 
 interface Props {
   selectedLandlordId: number;
+  page: number;
 }
 
 const formatTimestamp = (timestamp: string) => {
@@ -46,136 +62,148 @@ const formatTimestamp = (timestamp: string) => {
 const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
   const [landlord, setLandlord] = useState<Landlord | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
-    let foundDesiredLandlord = false;
-    let pageUrl = "/landlords-properties?page=" + currentPage;
-    setLoading(true);
-    function fetchLandlordDetails(pageUrl: string) {
-      apiClient
-        .get(pageUrl)
-        .then((response) => {
-          console.log("Landlords response:", response.data);
-          const { results, next } = response.data;
-          for (const landlord of results) {
-            if (landlord.landlord_id === selectedLandlordId) {
-              setLandlord(landlord);
-              foundDesiredLandlord = true;
-              break;
-            }
-          }
-          if (next && !foundDesiredLandlord) {
-            pageUrl = next;
-            fetchLandlordDetails(pageUrl);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching landlord details:", error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
-    fetchLandlordDetails(pageUrl);
-  }, [selectedLandlordId, currentPage, apiClient]);
-  // Fetch messages based on selected landlord ID
-  useEffect(() => {
-    const fetchMessages = async () => {
-      apiClient
-        .get(`/messages/?landlord_id=${selectedLandlordId}`)
-        .then((response) => {
-          console.log("Messages response:", response.data);
-          setMessages(response.data.results);
-        })
-        .catch((error) => {
-          console.error("Error fetching messages:", error);
-        });
+    const fetchLandlordDetails = async () => {
+      setLoading(true);
+      try {
+        const messagesResponse = await apiClient.get(
+          `/messages/?landlord_id=${selectedLandlordId}`
+        );
+        console.log("Messages response:", messagesResponse.data);
+        setMessages(messagesResponse.data.results);
+
+        const landlordResponse = await apiClient.get(
+          `/landlords-properties/?landlord_id=${selectedLandlordId}`
+        );
+        console.log("landlord properties response:", landlordResponse.data);
+
+        // Set the landlord to the first item if the results array is not empty
+        if (landlordResponse.data.results.length > 0) {
+          setLandlord(landlordResponse.data.results[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchMessages();
+    fetchLandlordDetails();
   }, [selectedLandlordId]);
 
   return (
     <>
       {isLoading && (
-        <div className="text-center m-3">
-          <div className="spinner-border text-primary" role="status"></div>
-        </div>
+       <Box
+       display='flex'
+       justifyContent='center'
+       alignItems='center'
+       marginTop={20}
+       >
+        <RingLoader 
+        color='#C9AE54' />
+       </Box>
       )}
       <div className={styles.mainContainer}>
         {landlord && (
           <div className={styles.mainContent}>
             <span className={styles.userName}>
-              {" "}
               <Image
                 src={user}
                 boxSize="70px"
                 borderRadius={50}
-                overflow={"hidden"}
-              ></Image>{" "}
+                overflow="hidden"
+                marginRight={2}
+              />
               <h2 className={styles.userHeading}>{landlord.full_name}</h2>
             </span>
-            <div
-              style={{ backgroundImage: `url(${whatsapp})` }}
+
+            <Card mb={4}>
+              <CardHeader boxShadow="0px 3px 4px rgba(0, 0, 0, 0.21)">
+                <Heading size="md" className={styles.userDetail}>
+                  No of Properties:{" "}
+                  {landlord.properties ? landlord.properties.length : 0}
+                </Heading>
+              </CardHeader>
+            </Card>
+
+            {landlord.properties && landlord.properties.length > 0 && (
+              <Table mt={4} className={styles.userPropertyTable} variant="simple">
+                <Thead>
+                  <Tr>
+                    <Th>Property ID</Th>
+                    <Th>Property Number</Th>
+                    <Th>Unit Number</Th>
+                    <Th>Property Type</Th>
+                    <Th>Rooms</Th>
+                    <Th>Building Name</Th>
+                    <Th>Project</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {landlord.properties.map((property, index) => (
+                    <Tr
+                      key={property.property_id}
+                      bg={index % 2 === 0 ? "#e5e7eb" : "white"}
+                      borderBottom="1px solid #e5e7eb"
+                    >
+                      <Td>{property.property_id}</Td>
+                      <Td>{property.p_number}</Td>
+                      <Td>{property.unit_no}</Td>
+                      <Td>{property.property_type}</Td>
+                      <Td>{property.no_room}</Td>
+                      <Td>{property.building_name}</Td>
+                      <Td>{property.project}</Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            )}
+
+            <Card mt={4}>
+              <CardHeader boxShadow="0px 3px 4px rgba(0, 0, 0, 0.21)">
+                <Heading size="md" className={styles.userDetail}>
+                  User Messages
+                </Heading>
+              </CardHeader>
+            </Card>
+
+            <Box
+              backgroundImage={`url(${whatsapp})`}
+              borderRadius="md"
               className={styles.messageContainer}
             >
-              {/* <h4>Message</h4> */}
-              <div>
-                {messages.length > 0 ? (
-                  messages.map((message) => (
-                    <span key={message.message_id}>
-                      <br />
-                      <br />
-                      <strong>Message:</strong>{" "}
-                      {message.message.split("\n").map((line, index) => (
-                        <React.Fragment key={index}>
-                          {line}
-                          <br />
-                        </React.Fragment>
-                      ))}
-                      <span className={styles.timeFloat}>
-                      <strong>Time:</strong>{" "}
-                      {formatTimestamp(message.timestamp)}
-                      </span>
-                     
-                    </span>
-                  ))
-                ) : (
-                  <p>No messages found.</p>
-                )}
-              </div>
-            </div>
-            <div
-              style={{ backgroundImage: `url(${whatsapp})` }}
-              className={styles.propertyCard}
-            >
-              <h6 className={styles.proDetailsBackground}>Property Details</h6>
-              <p>Properties:{landlord.properties.length}</p>
-              {landlord.properties.map((property) => (
-                <span key={property.property_id}>
-                  <strong>Property ID:</strong> {property.property_id}
-                  <br />
-                  <strong>Property Number:</strong> {property.p_number}
-                  <br />
-                  <strong>Unit Number:</strong> {property.unit_no}
-                  <br />
-                  <strong>Property Type:</strong> {property.property_type}
-                  <br />
-                  <strong>Rooms:</strong> {property.no_room}
-                  <br />
-                  <strong>Building name:</strong> {property.building_name}
-                  <br />
-                  <strong>Project:</strong> {property.project}
-                  <br />
-                  <hr />
-                </span>
-              ))}
-            </div>
+              {messages.length > 0 ? (
+                <Box>
+                  <h5 color="gray.500">Message</h5>
+                  {messages.map((message) => (
+                    <Box
+                      key={message.message_id}
+                      bg="#d9fdd3"
+                      p={4}
+                      mb={4}
+                      borderRadius="md"
+                      boxShadow="sm"
+                    >
+                      <Flex direction="column">
+                        <Text whiteSpace="pre-wrap">{message.message}</Text>
+                        <Text mt={2} fontSize="sm" color="gray.500">
+                          {formatTimestamp(message.timestamp)}
+                        </Text>
+                      </Flex>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <p>No messages found.</p>
+              )}
+            </Box>
           </div>
         )}
       </div>
+      {!isLoading && <Footer></Footer>}
     </>
   );
 };

@@ -1,3 +1,19 @@
 .navBackground{
-    background-color:rgba(0, 0, 255, 0.772);
+    background-color:#e5e7eb;
+    box-shadow:2px 6px 7px rgba(0, 0, 0, 0.21);
+    display: flex;
+    justify-content: space-between;
+ 
 }
+
+.closeIcon{
+    margin: 1% 3% 0% 0%;
+   font-size: x-large;
+}
+
+@media only screen and (max-width: 720px) {
+    .navBackground{
+       scrollbar-width: auto;
+    }
+  }
+  
