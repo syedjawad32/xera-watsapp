@@ -1,25 +1,4 @@
-import React, { useState, useEffect } from "react";
-import {
-  Image,
-  Card,
-  CardHeader,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Box,
-  Heading,
-  Flex,
-  Text,
-} from "@chakra-ui/react";
-import { RingLoader } from "react-spinners";
-import apiClient from "../services/api-client";
-import styles from "./Landlord.module.css";
-import Footer from "./Footer";
-import user from "../assets/user-profile.jpg";
-import whatsapp from "../assets/whatsapp.jpeg";
+
 
 interface Property {
   property_id: number;
@@ -33,7 +12,7 @@ interface Property {
   state: string;
 }
 
-interface Message {
+export interface Message {
   message_id: number;
   message: string;
   timestamp: string;
@@ -54,48 +33,43 @@ interface Props {
   page: number;
 }
 
-const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp);
-  return date.toLocaleString();
-};
+const LandlordDetailPage: React.FC<Props> = () => {
+  // const [landlord, setLandlord] = useState<Landlord | null>(null);
+  // const [messages, setMessages] = useState<Message[]>([]);
+  // const [isLoading, setIsLoading] = useState(false)
 
-const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
-  const [landlord, setLandlord] = useState<Landlord | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setLoading] = useState(false);
+  // useEffect(() => {
+  //   const fetchLandlordDetails = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const messagesResponse = await apiClient.get(
+  //         `/messages/?landlord_id=${selectedLandlordId}`
+  //       );
+  //       console.log("Messages response:", messagesResponse.data);
+  //       setMessages(messagesResponse.data.results);
 
-  useEffect(() => {
-    const fetchLandlordDetails = async () => {
-      setLoading(true);
-      try {
-        const messagesResponse = await apiClient.get(
-          `/messages/?landlord_id=${selectedLandlordId}`
-        );
-        console.log("Messages response:", messagesResponse.data);
-        setMessages(messagesResponse.data.results);
+  //       const landlordResponse = await apiClient.get(
+  //         `/landlords-properties/?landlord_id=${selectedLandlordId}`
+  //       );
+  //       console.log("landlord properties response:", landlordResponse.data);
 
-        const landlordResponse = await apiClient.get(
-          `/landlords-properties/?landlord_id=${selectedLandlordId}`
-        );
-        console.log("landlord properties response:", landlordResponse.data);
+  //       // Set the landlord to the first item if the results array is not empty
+  //       if (landlordResponse.data.results.length > 0) {
+  //         setLandlord(landlordResponse.data.results[0]);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching data:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-        // Set the landlord to the first item if the results array is not empty
-        if (landlordResponse.data.results.length > 0) {
-          setLandlord(landlordResponse.data.results[0]);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLandlordDetails();
-  }, [selectedLandlordId]);
+  //   fetchLandlordDetails();
+  // }, [selectedLandlordId]);
 
   return (
     <>
-      {isLoading && (
+      {/* {isLoading && (
        <Box
        display='flex'
        justifyContent='center'
@@ -203,7 +177,7 @@ const LandlordDetailPage: React.FC<Props> = ({ selectedLandlordId }) => {
           </div>
         )}
       </div>
-      {!isLoading && <Footer></Footer>}
+      {!isLoading && <Footer></Footer>} */}
     </>
   );
 };

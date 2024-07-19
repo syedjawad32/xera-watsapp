@@ -9,8 +9,8 @@ const Footer = () => {
         justifyContent="center"
         alignItems="center"
         height={20}
-        marginBottom={0}
         marginTop={6}
+       marginBottom={0}
         color="black"
       >
         All Rights&copy; Reserved to Xera-Marketing 

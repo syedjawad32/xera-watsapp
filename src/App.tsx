@@ -1,30 +1,38 @@
 import { useState, useEffect } from "react";
 import {
-  Box,
+  Image,
   Table,
   Thead,
   Tbody,
   Tr,
   Th,
   Td,
-  Button,
+  Box,
+  Heading,
+  Flex,
   Text,
+  Button,
 } from "@chakra-ui/react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { RingLoader } from "react-spinners";
-import LandlordDetailPage, { Landlord } from "./components/LandlordDetailPage";
+import Modal from "react-bootstrap/Modal";
+import styles from "./App.module.css";
+import user from "./assets/user-profile.jpg";
+import whatsapp from "./assets/whatsapp.jpeg";
+import logo from "./assets/logo.png-removebg-preview.png";
+import { Landlord, Message } from "./components/LandlordDetailPage";
 import apiClient from "./services/api-client";
 import Footer from "./components/Footer";
 
 interface AppProps {
   page: number;
 }
+const formatTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
+};
 
 const App = ({ page }: AppProps) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
   // hooks
   const [data, setData] = useState<Landlord[]>([]);
   const [sortedData, setSortedData] = useState<Landlord[]>([]);
@@ -37,6 +45,12 @@ const App = ({ page }: AppProps) => {
     null
   );
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(page);
+  const [landlord, setLandlord] = useState<Landlord | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [fullscreen, setFullscreen] = useState<string | true | undefined>(
+    undefined
+  );
+  const [show, setShow] = useState<boolean>(false);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc" | null;
@@ -64,41 +78,51 @@ const App = ({ page }: AppProps) => {
       });
   };
   // Ensure count is a valid number
-   const validCount = count ?? 0;
+  const validCount = count ?? 0;
 
   // count total pages
-  const totalPage = Math.ceil(validCount/ data.length);
-
-  useEffect(() => {
-    const storedPageIndex = localStorage.getItem("currentPageIndex");
-    const initialPageIndex = storedPageIndex
-      ? parseInt(storedPageIndex, 10)
-      : page;
-    setCurrentPageIndex(initialPageIndex);
-  }, [page]);
-
-  // storing page on local storage for get on time
-
-  useEffect(() => {
-    localStorage.setItem("currentPageIndex", currentPageIndex.toString());
-  }, [currentPageIndex]);
-
-  // initialize query params for finding currentpage when back to main page
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const page = parseInt(queryParams.get("page") || "0", 10);
-    setCurrentPageIndex(page);
-  }, [location.search]);
+  const totalPage = Math.ceil(validCount / data.length);
 
   // finding current page by nextpageurl link
   useEffect(() => {
     fetchData(`/landlords-properties/?page=${currentPageIndex + 1}`);
   }, [currentPageIndex]);
 
-  // handle user details with specific id
+  useEffect(() => {
+    const fetchLandlordDetails = async () => {
+      try {
+        const messagesResponse = await apiClient.get(
+          `/messages/?landlord_id=${selectedLandlordId}`
+        );
+        // console.log("Messages response:", messagesResponse.data);
+        setMessages(messagesResponse.data.results);
+
+        const landlordResponse = await apiClient.get(
+          `/landlords-properties/?landlord_id=${selectedLandlordId}`
+        );
+
+        // Set the landlord to the first item if the results array is not empty
+        if (landlordResponse.data.results.length > 0) {
+          setLandlord(landlordResponse.data.results[0]);
+          // console.log("landlord properties response:", landlordResponse.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchLandlordDetails();
+  }, [selectedLandlordId]);
+
   const handleViewDetails = (landlord: Landlord) => {
     setSelectedLandlordId(landlord.landlord_id);
-    navigate(`/landlord/${landlord.landlord_id}?page=${currentPageIndex}`);
+    setLandlord(landlord);
+    handleShow(true);
+  };
+
+  const handleShow = (breakpoint: boolean) => {
+    setFullscreen(breakpoint ? true : undefined); // Map boolean to `true` or `undefined`
+    setShow(true);
   };
 
   // initiliaze pagination segment of 5
@@ -252,9 +276,9 @@ const App = ({ page }: AppProps) => {
                   <Td>{landlord.messages_count}</Td>
                   <Td>
                     <Button
+                      size="sm"
                       bg="#C9AE54"
                       color="white"
-                      size="sm"
                       onClick={() => handleViewDetails(landlord)}
                     >
                       View Details
@@ -266,15 +290,151 @@ const App = ({ page }: AppProps) => {
           </Table>
         )}
       </Box>
-      {/* pass landlorddetailpage props for link with specific id  */}
-      {selectedLandlordId && (
-        <LandlordDetailPage
-          selectedLandlordId={selectedLandlordId}
-          page={page}
-        />
-      )}
+      {show && (
+        <Modal
+          show={show}
+          fullscreen={fullscreen}
+          onHide={() => setShow(false)}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <Image
+                src={logo}
+                width=""
+                height="55px"
+                marginLeft={5}
+                marginTop={1}
+                marginBottom={1}
+                alt="Logo"
+              />
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {isLoading && (
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                marginTop={20}
+              >
+                <RingLoader color="#C9AE54" />
+              </Box>
+            )}
+            <div className={styles.mainContainer}>
+              {landlord && (
+                <div className={styles.mainContent}>
+                  <span className={styles.userName}>
+                    <Image
+                      src={user}
+                      boxSize="70px"
+                      borderRadius={50}
+                      overflow="hidden"
+                      marginRight={2}
+                    />
+                    <h2 className={styles.userHeading}>{landlord.full_name}</h2>
+                  </span>
 
-      {/* pagintion interface  */}
+                  {/* <Card mb={4}>
+                    <CardHeader boxShadow="0px 3px 4px rgba(0, 0, 0, 0.21)"> */}
+                  <Heading size="md" className={styles.userDetail}>
+                    No of Properties:{" "}
+                    {landlord.properties ? landlord.properties.length : 0}
+                  </Heading>
+                  {/* </CardHeader>
+                  </Card> */}
+
+                  {landlord.properties && landlord.properties.length > 0 && (
+                    <Table
+                      // mt={4}
+                      className={styles.userPropertyTable}
+                      variant="striped"
+                    >
+                      <Thead
+                        sx={{
+                          bg: "#C9AE54",
+                          color: "white",
+                          th: {
+                            color: "white",
+                          },
+                        }}
+                      >
+                        <Tr>
+                          <Th>Property ID</Th>
+                          <Th>Property Number</Th>
+                          <Th>Unit Number</Th>
+                          <Th>Property Type</Th>
+                          <Th>Rooms</Th>
+                          <Th>Building Name</Th>
+                          <Th>Project</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {landlord.properties.map((property, index) => (
+                          <Tr
+                            key={property.property_id}
+                            bg={index % 2 === 0 ? "#e5e7eb" : "white"}
+                            borderBottom="1px solid #e5e7eb"
+                          >
+                            <Td>{property.property_id}</Td>
+                            <Td>{property.p_number}</Td>
+                            <Td>{property.unit_no}</Td>
+                            <Td>{property.property_type}</Td>
+                            <Td>{property.no_room}</Td>
+                            <Td>{property.building_name}</Td>
+                            <Td>{property.project}</Td>
+                          </Tr>
+                        ))}
+                      </Tbody>
+                    </Table>
+                  )}
+
+                  {/* <Card mt={4}>
+                    <CardHeader boxShadow="0px 3px 4px rgba(0, 0, 0, 0.21)"> */}
+                  <Heading size="md" className={styles.userDetail}>
+                    User Messages
+                  </Heading>
+                  {/* </CardHeader>
+                  </Card> */}
+
+                  <Box
+                    backgroundImage={`url(${whatsapp})`}
+                    borderRadius="md"
+                    className={styles.messageContainer}
+                  >
+                    {messages.length > 0 ? (
+                      <Box>
+                        <h5 color="gray.500">Message</h5>
+                        {messages.map((message) => (
+                          <Box
+                            key={message.message_id}
+                            bg="#d9fdd3"
+                            p={4}
+                            mb={4}
+                            borderRadius="md"
+                            boxShadow="sm"
+                          >
+                            <Flex direction="column">
+                              <Text whiteSpace="pre-wrap">
+                                {message.message}
+                              </Text>
+                              <Text mt={2} fontSize="sm" color="gray.500">
+                                {formatTimestamp(message.timestamp)}
+                              </Text>
+                            </Flex>
+                          </Box>
+                        ))}
+                      </Box>
+                    ) : (
+                      <p>No messages found.</p>
+                    )}
+                  </Box>
+                </div>
+              )}
+            </div>
+            {/* {!isLoading && <Footer />} */}
+          </Modal.Body>
+        </Modal>
+      )}
       {!isLoading && (
         <Box
           display="flex"
@@ -286,24 +446,25 @@ const App = ({ page }: AppProps) => {
         </Box>
       )}
       {!isLoading && (
-        <Box display="flex" justifyContent="center" m={2}>
+        <Box display="flex" justifyContent="center" mt={4}>
           <Button
-            bg="#C9AE54"
-            color="white"
             size="sm"
             m={1}
+            bg="#C9AE54"
+            color="white"
             onClick={handlePreviousPage}
+            disabled={!prevPageUrl}
           >
-            Prev Page
+            Previous Page
           </Button>
           {renderPageButtons()}
           <Button
-            bg="#C9AE54"
-            color="white"
             size="sm"
             m={1}
+            bg="#C9AE54"
+            color="white"
             onClick={handleNextPage}
-            disabled={currentPageIndex === totalPage - 1}
+            disabled={!nextPageUrl}
           >
             Next Page
           </Button>
