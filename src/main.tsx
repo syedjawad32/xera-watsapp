@@ -6,7 +6,7 @@ import Navbar from './components/Navbar.tsx';
 import LandlordDetailPage from './components/LandlordDetailPage.tsx';
 import 'bootstrap/dist/css/bootstrap.css';
 import { ChakraProvider } from '@chakra-ui/react';
-import './index.css';
+// import './index.css';
 
 const RouteRenderer = () => {
   const location = useLocation();
